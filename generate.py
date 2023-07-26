@@ -24,10 +24,10 @@ except:  # noqa: E722
 
 
 def main(
-    load_8bit: bool = False,
-    base_model: str = "",
-    lora_weights: str = "tloen/alpaca-lora-7b",
-    prompt_template: str = "",  # The prompt template to use, will default to alpaca.
+    load_8bit: bool = True,
+    base_model: str = "/data/haotian/RAP_tune/llama-30B-hf",
+    lora_weights: str = "/data/haotian/RAP_tune/alpaca-lora/lora-gsm8k-1100-July-22",
+    prompt_template: str = "gsm8k",  # The prompt template to use, will default to alpaca.
     server_name: str = "0.0.0.0",  # Allows to listen on all interfaces by providing '0.
     share_gradio: bool = False,
 ):
@@ -91,7 +91,7 @@ def main(
         top_p=0.75,
         top_k=40,
         num_beams=4,
-        max_new_tokens=128,
+        max_new_tokens=200,
         stream_output=False,
         **kwargs,
     ):
@@ -142,7 +142,7 @@ def main(
                     if output[-1] in [tokenizer.eos_token_id]:
                         break
 
-                    yield prompter.get_response(decoded_output)
+                    return prompter.get_response(decoded_output)
             return  # early return for stream_output
 
         # Without streaming
@@ -156,46 +156,47 @@ def main(
             )
         s = generation_output.sequences[0]
         output = tokenizer.decode(s)
-        yield prompter.get_response(output)
+        # yield prompter.get_response(output)
+        return prompter.get_response(output)
 
-    gr.Interface(
-        fn=evaluate,
-        inputs=[
-            gr.components.Textbox(
-                lines=2,
-                label="Instruction",
-                placeholder="Tell me about alpacas.",
-            ),
-            gr.components.Textbox(lines=2, label="Input", placeholder="none"),
-            gr.components.Slider(
-                minimum=0, maximum=1, value=0.1, label="Temperature"
-            ),
-            gr.components.Slider(
-                minimum=0, maximum=1, value=0.75, label="Top p"
-            ),
-            gr.components.Slider(
-                minimum=0, maximum=100, step=1, value=40, label="Top k"
-            ),
-            gr.components.Slider(
-                minimum=1, maximum=4, step=1, value=4, label="Beams"
-            ),
-            gr.components.Slider(
-                minimum=1, maximum=2000, step=1, value=128, label="Max tokens"
-            ),
-            gr.components.Checkbox(label="Stream output"),
-        ],
-        outputs=[
-            gr.inputs.Textbox(
-                lines=5,
-                label="Output",
-            )
-        ],
-        title="🦙🌲 Alpaca-LoRA",
-        description="Alpaca-LoRA is a 7B-parameter LLaMA model finetuned to follow instructions. It is trained on the [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) dataset and makes use of the Huggingface LLaMA implementation. For more information, please visit [the project's website](https://github.com/tloen/alpaca-lora).",  # noqa: E501
-    ).queue().launch(server_name="0.0.0.0", share=share_gradio)
+    # gr.Interface(
+    #     fn=evaluate,
+    #     inputs=[
+    #         gr.components.Textbox(
+    #             lines=2,
+    #             label="Instruction",
+    #             placeholder="Tell me about alpacas.",
+    #         ),
+    #         gr.components.Textbox(lines=2, label="Input", placeholder="none"),
+    #         gr.components.Slider(
+    #             minimum=0, maximum=1, value=0.1, label="Temperature"
+    #         ),
+    #         gr.components.Slider(
+    #             minimum=0, maximum=1, value=0.75, label="Top p"
+    #         ),
+    #         gr.components.Slider(
+    #             minimum=0, maximum=100, step=1, value=40, label="Top k"
+    #         ),
+    #         gr.components.Slider(
+    #             minimum=1, maximum=4, step=1, value=4, label="Beams"
+    #         ),
+    #         gr.components.Slider(
+    #             minimum=1, maximum=2000, step=1, value=128, label="Max tokens"
+    #         ),
+    #         gr.components.Checkbox(label="Stream output"),
+    #     ],
+    #     outputs=[
+    #         gr.inputs.Textbox(
+    #             lines=5,
+    #             label="Output",
+    #         )
+    #     ],
+    #     title="🦙🌲 Alpaca-LoRA",
+    #     description="Alpaca-LoRA is a 7B-parameter LLaMA model finetuned to follow instructions. It is trained on the [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) dataset and makes use of the Huggingface LLaMA implementation. For more information, please visit [the project's website](https://github.com/tloen/alpaca-lora).",  # noqa: E501
+    # ).queue().launch(server_name="0.0.0.0", share=share_gradio)
     # Old testing code follows.
 
-    """
+    
     # testing code for readme
     for instruction in [
         "Tell me about alpacas.",
@@ -211,7 +212,7 @@ def main(
         print("Instruction:", instruction)
         print("Response:", evaluate(instruction))
         print()
-    """
+    
 
 
 if __name__ == "__main__":
